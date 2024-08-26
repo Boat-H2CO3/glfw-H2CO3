@@ -50,6 +50,14 @@ if (GLFW_BUILD_X11)
                                 glx_context.c)
 endif()
 
+if (GLFW_USE_BOAT)
+    target_compile_definitions(glfw PRIVATE _GLFW_BOAT)
+    target_sources(glfw PRIVATE boat_platform.h posix_time.h null_joystick.h
+    posix_thread.h egl_context.h osmesa_context.h boat_init.c null_joystick.c boat_monitor.c
+    boat_window.c posix_time.c posix_thread.c egl_context.c
+    osmesa_context.c)
+endif()
+
 if (GLFW_BUILD_WAYLAND)
     target_compile_definitions(glfw PRIVATE _GLFW_WAYLAND)
     target_sources(glfw PRIVATE wl_platform.h xkb_unicode.h wl_init.c
@@ -119,15 +127,19 @@ else()
 endif()
 set(GLFW_LIB_NAME_SUFFIX "")
 
-set_target_properties(glfw PROPERTIES
-                      OUTPUT_NAME ${GLFW_LIB_NAME}
-                      VERSION ${GLFW_VERSION_MAJOR}.${GLFW_VERSION_MINOR}
-                      SOVERSION ${GLFW_VERSION_MAJOR}
-                      POSITION_INDEPENDENT_CODE ON
-                      C_STANDARD 99
-                      C_EXTENSIONS OFF
-                      DEFINE_SYMBOL _GLFW_BUILD_DLL
-                      FOLDER "GLFW3")
+if (BUILD_LIB_SOVERSION)
+    set_target_properties(glfw PROPERTIES
+                          OUTPUT_NAME ${GLFW_LIB_NAME}
+                          VERSION ${GLFW_VERSION_MAJOR}.${GLFW_VERSION_MINOR}
+                          SOVERSION ${GLFW_VERSION_MAJOR}
+                          POSITION_INDEPENDENT_CODE ON
+                          FOLDER "GLFW3")
+else()
+    set_target_properties(glfw PROPERTIES
+                          OUTPUT_NAME ${GLFW_LIB_NAME}
+                          POSITION_INDEPENDENT_CODE ON
+                          FOLDER "GLFW3")
+endif()
 
 target_include_directories(glfw PUBLIC
                            "$<BUILD_INTERFACE:${GLFW_SOURCE_DIR}/include>"
@@ -366,4 +378,3 @@ if (GLFW_INSTALL)
             ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
             LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 endif()
-

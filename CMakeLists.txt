@@ -19,6 +19,7 @@ option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" ${GLFW_STANDALONE})
 option(GLFW_BUILD_TESTS "Build the GLFW test programs" ${GLFW_STANDALONE})
 option(GLFW_BUILD_DOCS "Build the GLFW documentation" ON)
 option(GLFW_INSTALL "Generate installation target" ON)
+option(BUILD_LIB_SOVERSION "Build the library with soversion" ON)
 
 include(GNUInstallDirs)
 include(CMakeDependentOption)
@@ -27,7 +28,7 @@ if (GLFW_USE_OSMESA)
     message(FATAL_ERROR "GLFW_USE_OSMESA has been removed; set the GLFW_PLATFORM init hint")
 endif()
 
-if (DEFINED GLFW_USE_WAYLAND AND UNIX AND NOT APPLE)
+if (DEFINED GLFW_USE_WAYLAND AND UNIX AND NOT APPLE AND NOT GLFW_USE_BOAT)
     message(FATAL_ERROR
         "GLFW_USE_WAYLAND has been removed; delete the CMake cache and set GLFW_BUILD_WAYLAND and GLFW_BUILD_X11 instead")
 endif()
@@ -74,6 +75,11 @@ endif()
 if (GLFW_BUILD_X11)
     message(STATUS "Including X11 support")
 endif()
+if (GLFW_USE_BOAT)
+set(_GLFW_BOAT 1)
+    message(STATUS "Including X11 support")
+endif()
+
 
 #--------------------------------------------------------------------
 # Apply Microsoft C runtime library option
@@ -163,3 +169,32 @@ if (GLFW_INSTALL)
     endif()
 endif()
 
+#--------------------------------------------------------------------
+# Use Boat for window creation
+#--------------------------------------------------------------------
+if (_GLFW_BOAT)
+
+    find_library(ANDROID_LIBRARY android)
+    mark_as_advanced(ANDROID_LIBRARY)
+    if (ANDROID_LIBRARY)
+        list(APPEND glfw_LIBRARIES "${ANDROID_LIBRARY}")
+        list(APPEND glfw_PKG_LIBS "-landroid")
+    else()
+        message(FATAL_ERROR "libandroid not fount; set correct CMAKE_LIBRARY_PATH to include libandroid.so")
+    endif()
+
+    find_library(BOAT_LIBRARY boat ${BOAT_LIB_PATH})
+    if (BOAT_LIBRARY)
+        list(APPEND glfw_LIBRARIES "${BOAT_LIBRARY}")
+        list(APPEND glfw_PKG_LIBS "-lboat")
+    else()
+        message(FATAL_ERROR "libboat not fount; set correct BOAT_LIB_PATH to include libboat.so")
+    endif()
+
+    if (NOT BOAT_INCLUDE_PATH)
+        message(FATAL_ERROR "Boat headers not found; set correct BOAT_INCLUDE_PATH to include headers")
+    endif()
+    list(APPEND glfw_INCLUDE_DIRS "${BOAT_INCLUDE_PATH}")
+    list(APPEND glfw_PKG_DEPS "android")
+    list(APPEND glfw_PKG_DEPS "boat")
+endif()
